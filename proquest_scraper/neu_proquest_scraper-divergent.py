@@ -12,7 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 pageNum = 2
 hasNextPage = True
 ARTICLE_COUNT = 0
-MAX_ARTICLES = 100
+MAX_ARTICLES = 100  # set the maximum number of articles to scrape
 
 # set up variables
 DEFAULT_YEAR_FROM = 2017
@@ -98,11 +98,11 @@ def getArticles():
                 hasNextPage = False
                 print("Maximum number of articles reached. Stopping the scraper.")
                 return
-            
+
             time.sleep(3)
             a_element = li.find_element(By.CLASS_NAME, 'previewTitle')
             href = a_element.get_attribute('href')
-            
+
             if href and href != 'javascript:void(0)':
                 print("---")
                 print(f"Navigating to: {href}")
@@ -110,18 +110,18 @@ def getArticles():
                 driver.switch_to.window(driver.window_handles[-1])
 
                 getArticleContent(href)
-                
+
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
 
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CLASS_NAME, 'resultItems'))
                 )
-                
+
                 time.sleep(1)
     except Exception as e:
         print(f"Error: {e}")
-     
+
 # function to filter by year
 def filterByYear(year_from, year_to):
     print("--")
@@ -150,7 +150,7 @@ def filterByYear(year_from, year_to):
     while attempts < max_attempts:
         try:
             submitButton.click()
-            
+
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.ID, 'applied-filters'))
             )
@@ -182,7 +182,7 @@ def getArticleContent(href):
         text = full_text.text
     except:
         text = None
-        
+
     # clicking on the details button
     contentsButton = None
     try:
@@ -224,25 +224,25 @@ def getArticleDetails():
     parent_divs = WebDriverWait(driver, 2).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, 'display_record_indexing_row'))
     )
-        
+
     for div in parent_divs:
         field_name = div.find_element(By.CLASS_NAME, 'display_record_indexing_fieldname').text
-        
+
         if field_name.strip() == 'Publisher':
             newspaper = div.find_element(By.CLASS_NAME, 'display_record_indexing_data').text
-        
+
         if field_name.strip() == 'Country of publication':
             location = div.find_element(By.CLASS_NAME, 'display_record_indexing_data').text
-            
+
         if field_name.strip() == 'Publication date':
             date = div.find_element(By.CLASS_NAME, 'display_record_indexing_data').text
-        
+
         if field_name.strip() == 'Title':
             title = div.find_element(By.CLASS_NAME, 'display_record_indexing_data').text
-            
+
         if field_name.strip() == 'Author':
             author = div.find_element(By.CLASS_NAME, 'display_record_indexing_data').text
-            
+
     return newspaper, location, date, title, author
 
 # closing any banners (mainly cookie banner)
@@ -253,7 +253,7 @@ def closeBanner(max_attempts=3):
                 EC.element_to_be_clickable((By.ID, 'onetrust-accept-btn-handler'))
             )
             consent_button.click()
-            
+
             # wait for the banner to disappear
             WebDriverWait(driver, 10).until(
                 EC.invisibility_of_element_located((By.CLASS_NAME, 'onetrust-pc-dark-filter'))
@@ -262,7 +262,8 @@ def closeBanner(max_attempts=3):
             return True
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
-    
+
+    print("Failed to close consent banner after multiple attempts.")
     print("Failed to close consent banner after multiple attempts.") 
     return False
 
@@ -305,7 +306,7 @@ def create_proquest_search_string():
     )
     if SEARCH_KEYWORDS:
         search_string += f' AND ({" AND ".join(SEARCH_KEYWORDS)})'
-    
+
     search_string += f' NOT ({" AND ".join(EXCLUDED_KEYWORDS)})'
 
     return search_string
@@ -343,5 +344,3 @@ if __name__ == "__main__":
 
     while hasNextPage:
         nextPage()
-
-    driver.quit()
